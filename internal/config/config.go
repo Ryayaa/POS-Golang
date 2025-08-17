@@ -17,7 +17,7 @@ func Load() (*Config, error) {
 
 	config := &Config{
 		Port:      getEnv("PORT", "8080"),
-		JWTSecret: getEnv("JWT_SECRET", "your_secret_key"),
+		JWTSecret: getEnv("JWT_SECRET", "POS_Golang_2024_SuperSecretKey_!@#$%^&*()_+1234567890ABCDEFGHabcdefgh"),
 		DBDSN:     getEnv("DB_DSN", "root:@tcp(localhost:3306)/pos_db?parseTime=true"),
 	}
 	return config, nil

@@ -18,16 +18,26 @@ func main() {
 	}
 
 	// Connect to database
-	if err := database.Connect(cfg.DBDSN); err != nil {
+	if err := database.Connect(); err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
 	// Setup router
 	r := gin.Default()
 
-	// Load HTML templates
-	r.LoadHTMLGlob("web/templates/**/*")
-	r.Static("/static", "./web/static")
+	// Enable CORS for frontend
+	r.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	})
 
 	// API routes
 	api := r.Group("/api/v1")
@@ -67,12 +77,13 @@ func main() {
 		}
 	}
 
-	// Web routes (untuk UI)
-	r.GET("/", handlers.IndexPage)
-	r.GET("/login", handlers.LoginPage)
-	r.GET("/dashboard", handlers.DashboardPage)
-	r.GET("/products", handlers.ProductsPage)
-	r.GET("/transactions", handlers.TransactionsPage)
+	// Health check endpoint
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status":  "OK",
+			"message": "POS API is running",
+		})
+	})
 
 	log.Printf("Server starting on port %s", cfg.Port)
 	log.Fatal(r.Run(":" + cfg.Port))

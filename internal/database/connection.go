@@ -2,6 +2,7 @@ package database
 
 import (
 	"POS-Golang/internal/models"
+	"os"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -9,8 +10,16 @@ import (
 
 var DB *gorm.DB
 
-func Connect(dsn string) error {
+func Connect() error {
 	var err error
+
+	// Gunakan environment variable untuk database connection
+	dsn := os.Getenv("DB_DSN")
+	if dsn == "" {
+		// Default untuk development - ganti dengan MySQL connection string yang sesuai
+		dsn = "user:password@tcp(localhost:3306)/pos_db?charset=utf8mb4&parseTime=True&loc=Local"
+	}
+
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return err
