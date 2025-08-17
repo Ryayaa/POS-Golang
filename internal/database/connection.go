@@ -9,10 +9,9 @@ import (
 
 var DB *gorm.DB
 
-func Connect() error {
+func Connect(dsn string) error {
 	var err error
-	// Menggunakan SQLite untuk kemudahan belajar
-	DB, err = gorm.Open(mysql.Open("pos.db"), &gorm.Config{})
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return err
 	}
@@ -31,5 +30,4 @@ func Connect() error {
 
 func GetDB() *gorm.DB {
 	return DB
-
 }

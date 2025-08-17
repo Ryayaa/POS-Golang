@@ -18,7 +18,7 @@ func main() {
 	}
 
 	// Connect to database
-	if err := database.Connect(); err != nil {
+	if err := database.Connect(cfg.DBDSN); err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
 

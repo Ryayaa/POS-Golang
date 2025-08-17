@@ -9,7 +9,7 @@ import (
 type Config struct {
 	Port      string
 	JWTSecret string
-	DBpath    string
+	DBDSN     string // ganti dari DBpath ke DBDSN
 }
 
 func Load() (*Config, error) {
@@ -18,7 +18,7 @@ func Load() (*Config, error) {
 	config := &Config{
 		Port:      getEnv("PORT", "8080"),
 		JWTSecret: getEnv("JWT_SECRET", "your_secret_key"),
-		DBpath:    getEnv("DB_PATH", "pos.db"),
+		DBDSN:     getEnv("DB_DSN", "root:@tcp(localhost:3306)/pos_db?parseTime=true"),
 	}
 	return config, nil
 }
