@@ -9,31 +9,45 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Get all users (Admin only)
+// Get all users with pagination and filter
 func GetUsers(c *gin.Context) {
 	db := database.GetDB()
-	var users []models.User
 
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	// Ambil query parameter
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "25")
+	search := c.Query("search")
+	role := c.Query("role")
+
+	page, _ := strconv.Atoi(pageStr)
+	limit, _ := strconv.Atoi(limitStr)
+	offset := (page - 1) * limit
+
+	var users []models.User
+	query := db.Model(&models.User{})
+
+	if search != "" {
+		query = query.Where("username LIKE ? OR email LIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+	if role != "" {
+		query = query.Where("role = ?", role)
+	}
 
 	var total int64
-	db.Model(&models.User{}).Count(&total)
+	query.Count(&total)
 
-	offset := (page - 1) * limit
-	if err := db.Offset(offset).Limit(limit).Find(&users).Error; err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
+	if err := query.Offset(offset).Limit(limit).Order("created_at desc").Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Failed to fetch users"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Users fetched successfully",
+		"success": true,
 		"users":   users,
 		"pagination": gin.H{
 			"page":  page,
 			"limit": limit,
 			"total": total,
-			"pages": (total + int64(limit) - 1) / int64(limit),
 		},
 	})
 }
@@ -77,6 +91,7 @@ func CreateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
 		"message": "User created successfully",
 		"user": gin.H{
 			"id":       user.ID,
@@ -133,6 +148,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"success": true,
 		"message": "User updated successfully",
 		"user": gin.H{
 			"id":       user.ID,
@@ -170,5 +186,7 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "User deleted successfully"})
 }

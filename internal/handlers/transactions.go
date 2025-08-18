@@ -56,6 +56,11 @@ func GetTransactions(c *gin.Context) {
 		query = query.Where("status = ?", status)
 	}
 
+	paymentMethod := c.Query("payment_method")
+	if paymentMethod != "" {
+		query = query.Where("payment_method = ?", paymentMethod)
+	}
+
 	// Count total records
 	var total int64
 	query.Model(&models.Transaction{}).Count(&total)

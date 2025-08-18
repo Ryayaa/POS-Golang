@@ -16,8 +16,9 @@ func Connect() error {
 	// Gunakan environment variable untuk database connection
 	dsn := os.Getenv("DB_DSN")
 	if dsn == "" {
-		// Default untuk development - ganti dengan MySQL connection string yang sesuai
-		dsn = "user:password@tcp(localhost:3306)/pos_db?charset=utf8mb4&parseTime=True&loc=Local"
+		// Default untuk development - sesuaikan dengan kredensial MySQL Anda
+		// Format: username:password@tcp(host:port)/database_name?charset=utf8mb4&parseTime=True&loc=Local
+		dsn = "root:@tcp(localhost:3306)/pos_db?charset=utf8mb4&parseTime=True&loc=Local"
 	}
 
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})

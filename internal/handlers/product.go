@@ -102,7 +102,19 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
+	if req.CategoryID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Category ID tidak boleh 0"})
+		return
+	}
+
 	db := database.GetDB()
+
+	// Cek apakah kategori ada
+	var category models.Category
+	if err := db.First(&category, req.CategoryID).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Category tidak ditemukan"})
+		return
+	}
 
 	// Check if barcode already exists (if provided)
 	if req.Barcode != "" {
@@ -158,11 +170,23 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
+	if req.CategoryID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Category ID tidak boleh 0"})
+		return
+	}
+
 	db := database.GetDB()
 	var product models.Product
 
 	if err := db.First(&product, id).Error; err != nil {
 		utils.ErrorResponse(c, "Product not found", err)
+		return
+	}
+
+	// Cek apakah kategori ada
+	var category models.Category
+	if err := db.First(&category, req.CategoryID).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Category tidak ditemukan"})
 		return
 	}
 

@@ -13,9 +13,9 @@ type Transaction struct {
 	User          User              `json:"user,omitempty"`
 	Items         []TransactionItem `json:"items,omitempty" gorm:"foreignKey:TransactionID"`
 	TotalAmount   float64           `json:"total_amount" gorm:"not null" validate:"required,gt=0"`
-	PaymentMethod string            `json:"payment_method" gorm:"not null" validate:"required,oneof=cash card online"`
+	PaymentMethod string            `json:"payment_method" gorm:"not null" validate:"required,oneof=cash card transfer"`
 	PaymentAmount float64           `json:"payment_amount" gorm:"not null" validate:"required,gt=0"`
-	ChangeAmount  float64           `json:"change_amount" gorm:"not null" validate:"required,gt=0"`
+	ChangeAmount  float64           `json:"change_amount" gorm:"not null" validate:"required,gte=0"`
 	Status        string            `json:"status" gorm:"not null;default:'completed'" validate:"required,oneof=pending completed cancelled"`
 	CreatedAt     time.Time         `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt     time.Time         `json:"updated_at" gorm:"autoUpdateTime"`

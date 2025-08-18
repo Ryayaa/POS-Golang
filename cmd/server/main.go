@@ -27,9 +27,11 @@ func main() {
 
 	// Enable CORS for frontend
 	r.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
+		origin := c.Request.Header.Get("Origin")
+		c.Header("Access-Control-Allow-Origin", origin)
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		c.Header("Access-Control-Allow-Credentials", "true")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
@@ -64,6 +66,9 @@ func main() {
 
 			// Dashboard
 			protected.GET("/dashboard", handlers.GetDashboard)
+
+			protected.GET("/categories", handlers.GetCategories)
+			protected.POST("/categories", handlers.CreateCategory)
 		}
 
 		// Admin only routes

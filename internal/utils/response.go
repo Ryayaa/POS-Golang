@@ -8,32 +8,71 @@ import (
 
 type Response struct {
 	Success bool        `json:"success"`
-	Data    interface{} `json:"data,omitempty"`
 	Message string      `json:"message,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
 	Error   string      `json:"error,omitempty"`
 }
 
 func SuccessResponse(c *gin.Context, message string, data interface{}) {
 	c.JSON(http.StatusOK, Response{
 		Success: true,
-		Data:    data,
 		Message: message,
+		Data:    data,
 	})
 }
 
 func ErrorResponse(c *gin.Context, message string, err error) {
-	c.JSON(http.StatusBadRequest, Response{
+	response := Response{
 		Success: false,
-		Error:   err.Error(),
+		Message: message,
+	}
+
+	if err != nil {
+		response.Error = err.Error()
+	}
+
+	c.JSON(http.StatusBadRequest, response)
+}
+
+func ValidationErrorResponse(c *gin.Context, message string, validationErrors map[string]string) {
+	c.JSON(http.StatusUnprocessableEntity, Response{
+		Success: false,
+		Message: message,
+		Error:   "Validation failed",
+		Data:    validationErrors,
+	})
+}
+
+func UnauthorizedResponse(c *gin.Context, message string) {
+	c.JSON(http.StatusUnauthorized, Response{
+		Success: false,
 		Message: message,
 	})
 }
 
-func ValidationErrorResponse(c *gin.Context, message string, validationErrors map[string]string) {
-	c.JSON(http.StatusBadRequest, Response{
+func ForbiddenResponse(c *gin.Context, message string) {
+	c.JSON(http.StatusForbidden, Response{
 		Success: false,
-		Error:   "Validation error",
 		Message: message,
-		Data:    validationErrors,
 	})
+}
+
+func NotFoundResponse(c *gin.Context, message string) {
+	c.JSON(http.StatusNotFound, Response{
+		Success: false,
+		Message: message,
+	})
+}
+
+func InternalServerErrorResponse(c *gin.Context, message string, err error) {
+	response := Response{
+		Success: false,
+		Message: message,
+	}
+
+	if err != nil {
+		response.Error = err.Error()
+	}
+
+	c.JSON(http.StatusInternalServerError, response)
 }

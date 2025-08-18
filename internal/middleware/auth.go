@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"POS-Golang/internal/utils"
 	"fmt"
 	"net/http"
 	"strings"
@@ -14,15 +13,21 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			utils.ErrorResponse(c, "Authorization header is required", nil)
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": "Authorization header is required",
+			})
+			c.Abort()
 			return
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader { // If no "Bearer " prefix
-			utils.ErrorResponse(c, "Invalid authorization format", nil)
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": "Invalid authorization format",
+			})
+			c.Abort()
 			return
 		}
 
@@ -34,18 +39,24 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			utils.ErrorResponse(c, "Invalid or expired token", err)
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": "Invalid or expired token",
+			})
+			c.Abort()
 			return
 		}
 
-		// Ambil claims dan set ke context
+		// Extract claims and set to context
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
 			if userID, ok := claims["user_id"]; ok {
 				c.Set("user_id", userID)
 			}
 			if role, ok := claims["role"]; ok {
 				c.Set("role", role)
+			}
+			if username, ok := claims["username"]; ok {
+				c.Set("username", username)
 			}
 		}
 
@@ -57,8 +68,11 @@ func AdminOnly() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userRole, exists := c.Get("role")
 		if !exists || userRole != "admin" {
-			utils.ErrorResponse(c, "Admin access required", nil)
-			c.AbortWithStatus(http.StatusForbidden)
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Admin access required",
+			})
+			c.Abort()
 			return
 		}
 		c.Next()

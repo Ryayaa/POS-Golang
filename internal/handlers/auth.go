@@ -33,13 +33,11 @@ func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ValidationErrorResponse(c, "Invalid request", map[string]string{"error": err.Error()})
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	if err := validate.Struct(req); err != nil {
 		utils.ValidationErrorResponse(c, "Validation failed", map[string]string{"error": err.Error()})
-		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"error": "Validation failed"})
 		return
 	}
 
@@ -48,15 +46,19 @@ func Login(c *gin.Context) {
 
 	// Find user by username or email
 	if err := db.Where("username = ? OR email = ?", req.UsernameOrEmail, req.UsernameOrEmail).First(&user).Error; err != nil {
-		utils.ErrorResponse(c, "Invalid credentials", err)
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"message": "Invalid credentials",
+		})
 		return
 	}
 
 	// Check password
 	if !user.CheckPassword(req.Password) {
-		utils.ErrorResponse(c, "Invalid credentials", nil)
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"message": "Invalid credentials",
+		})
 		return
 	}
 
@@ -70,17 +72,24 @@ func Login(c *gin.Context) {
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
-		utils.ErrorResponse(c, "Failed to generate token", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to generate token",
+		})
 		return
 	}
 
-	utils.SuccessResponse(c, "Login successful", gin.H{
-		"token": tokenString,
-		"user": gin.H{
-			"id":       user.ID,
-			"username": user.Username,
-			"email":    user.Email,
-			"role":     user.Role,
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Login successful",
+		"data": gin.H{
+			"token": tokenString,
+			"user": gin.H{
+				"id":       user.ID,
+				"username": user.Username,
+				"email":    user.Email,
+				"role":     user.Role,
+			},
 		},
 	})
 }
@@ -89,12 +98,20 @@ func Login(c *gin.Context) {
 func Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ValidationErrorResponse(c, "Invalid request", map[string]string{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request",
+			"error":   err.Error(),
+		})
 		return
 	}
 
 	if err := validate.Struct(req); err != nil {
-		utils.ValidationErrorResponse(c, "Validation failed", map[string]string{"error": err.Error()})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"success": false,
+			"message": "Validation failed",
+			"error":   err.Error(),
+		})
 		return
 	}
 
@@ -103,7 +120,10 @@ func Register(c *gin.Context) {
 	// Check if user already exists
 	var existingUser models.User
 	if err := db.Where("username = ? OR email = ?", req.Username, req.Email).First(&existingUser).Error; err == nil {
-		utils.ErrorResponse(c, "User already exists", nil)
+		c.JSON(http.StatusConflict, gin.H{
+			"success": false,
+			"message": "User already exists",
+		})
 		return
 	}
 
@@ -117,22 +137,32 @@ func Register(c *gin.Context) {
 
 	// Hash password
 	if err := user.HashPassword(); err != nil {
-		utils.ErrorResponse(c, "Failed to hash password", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to hash password",
+		})
 		return
 	}
 
 	// Save to database
 	if err := db.Create(&user).Error; err != nil {
-		utils.ErrorResponse(c, "Failed to create user", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to create user",
+		})
 		return
 	}
 
-	utils.SuccessResponse(c, "User created successfully", gin.H{
-		"user": gin.H{
-			"id":       user.ID,
-			"username": user.Username,
-			"email":    user.Email,
-			"role":     user.Role,
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"message": "User created successfully",
+		"data": gin.H{
+			"user": gin.H{
+				"id":       user.ID,
+				"username": user.Username,
+				"email":    user.Email,
+				"role":     user.Role,
+			},
 		},
 	})
 }
